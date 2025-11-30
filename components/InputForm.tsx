@@ -2,7 +2,7 @@
 import React from 'react';
 import { DiscountInput, CalculatorMode } from '../types';
 import { currencies } from '../services/calculatorService';
-import { Percent, Tag, Truck, Calculator, ArrowRightLeft, ShoppingBag } from 'lucide-react';
+import { Percent, Tag, Truck, Calculator, ArrowRightLeft, ShoppingBag, Info } from 'lucide-react';
 
 interface InputFormProps {
   values: DiscountInput;
@@ -42,23 +42,63 @@ export const InputForm: React.FC<InputFormProps> = ({ values, onChange, mode, on
 
       <div className="p-6 space-y-6">
         
-        {/* Currency Selector */}
-        <div>
-           <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Select Currency</label>
-           <div className="relative">
-             <select
-               value={values.currency}
-               onChange={(e) => onChange('currency', e.target.value)}
-               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all text-sm font-medium text-slate-700 cursor-pointer appearance-none"
-             >
-               {currencies.map(c => (
-                 <option key={c.code} value={c.code}>{c.name} ({c.code} - {c.symbol})</option>
-               ))}
-             </select>
-             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+        {/* Original Price Logic Explanation */}
+        {mode === 'ORIGINAL' && (
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
+             <Info className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+             <div className="text-sm text-blue-800">
+               <p className="font-semibold mb-1">How Original Price is Calculated?</p>
+               <p className="opacity-90">
+                 This tool performs a reverse calculation to find the price <strong>before</strong> the discount was applied.
+               </p>
+               <p className="mt-1 text-xs opacity-75 font-mono">Formula: Final Price / (1 - Discount Percentage)</p>
              </div>
-           </div>
+          </div>
+        )}
+
+        {/* Currency and Quantity Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {/* Currency Selector */}
+          <div>
+             <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Select Currency</label>
+             <div className="relative">
+               <select
+                 value={values.currency}
+                 onChange={(e) => onChange('currency', e.target.value)}
+                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all text-sm font-medium text-slate-700 cursor-pointer appearance-none"
+               >
+                 {currencies.map(c => (
+                   <option key={c.code} value={c.code}>{c.name} ({c.code} - {c.symbol})</option>
+                 ))}
+               </select>
+               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+               </div>
+             </div>
+          </div>
+
+          {/* Quantity Input - Highlighted */}
+          <div>
+             <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center justify-between">
+                Quantity <span className="text-red-400 text-[10px] normal-case font-normal">(Required)</span>
+             </label>
+             <div className="relative">
+                <input
+                    type="number"
+                    min="1"
+                    value={values.quantity}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      onChange('quantity', isNaN(val) ? 0 : val);
+                    }}
+                    disabled={disabled}
+                    className="w-full pl-4 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400">
+                  <ShoppingBag className="w-5 h-5 opacity-50" />
+                </div>
+             </div>
+          </div>
         </div>
 
         {/* Inputs based on Mode */}
@@ -181,64 +221,72 @@ export const InputForm: React.FC<InputFormProps> = ({ values, onChange, mode, on
 
         {/* Simple Extra Options */}
         {mode === 'PRICE' && (
-          <div className="pt-4 border-t border-slate-100">
-             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Optional Details</p>
-             <div className="grid grid-cols-2 gap-4">
+          <div className="pt-6 border-t border-slate-100">
+             <div className="flex items-center gap-2 mb-3">
+               <p className="text-sm font-bold text-slate-700">Optional Costs & Fees</p>
+             </div>
+             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                   <label className="block text-xs text-slate-500 mb-1">Quantity</label>
-                    <input
-                        type="number"
-                        min="1"
-                        value={values.quantity}
-                        onChange={(e) => onChange('quantity', parseInt(e.target.value))}
-                        disabled={disabled}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                </div>
-                <div>
-                    <label className="block text-xs text-slate-500 mb-1">Tax (%)</label>
-                    <input
-                        type="number"
-                        min="0"
-                        value={values.taxRate || ''}
-                        onChange={(e) => onChange('taxRate', parseFloat(e.target.value))}
-                        disabled={disabled}
-                        placeholder="0"
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                </div>
-                <div>
-                    <label className="block text-xs text-slate-500 mb-1">Shipping</label>
-                    <input
-                        type="number"
-                        min="0"
-                        value={values.shippingCost || ''}
-                        onChange={(e) => onChange('shippingCost', parseFloat(e.target.value))}
-                        disabled={disabled}
-                        placeholder="0"
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                </div>
-                {values.dealType === 'standard' && (
-                  <div>
-                     <label className="block text-xs text-slate-500 mb-1">Extra Coupon (%)</label>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Tax (%)</label>
+                    <div className="relative">
                       <input
                           type="number"
                           min="0"
-                          max="100"
-                          value={values.additionalCoupon || ''}
-                          onChange={(e) => onChange('additionalCoupon', parseFloat(e.target.value))}
+                          value={values.taxRate || ''}
+                          onChange={(e) => onChange('taxRate', parseFloat(e.target.value))}
                           disabled={disabled}
                           placeholder="0"
-                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                          className="w-full pl-3 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       />
+                      <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                         <span className="text-slate-400 text-xs font-bold">%</span>
+                      </div>
+                    </div>
+                </div>
+                <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Shipping</label>
+                    <div className="relative">
+                      <input
+                          type="number"
+                          min="0"
+                          value={values.shippingCost || ''}
+                          onChange={(e) => onChange('shippingCost', parseFloat(e.target.value))}
+                          disabled={disabled}
+                          placeholder="0"
+                          className="w-full pl-6 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      />
+                      <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                         <span className="text-slate-400 text-xs font-bold">{currentCurrency.symbol}</span>
+                      </div>
+                    </div>
+                </div>
+                {values.dealType === 'standard' && (
+                  <div>
+                     <label className="block text-xs font-semibold text-slate-600 mb-1">Extra Coupon (%)</label>
+                      <div className="relative">
+                        <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={values.additionalCoupon || ''}
+                            onChange={(e) => onChange('additionalCoupon', parseFloat(e.target.value))}
+                            disabled={disabled}
+                            placeholder="0"
+                            className="w-full pl-3 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        />
+                         <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                           <span className="text-slate-400 text-xs font-bold">%</span>
+                        </div>
+                      </div>
                   </div>
                 )}
              </div>
              {values.dealType !== 'standard' && (
-               <div className="mt-2 p-2 bg-blue-50 rounded-lg text-xs text-blue-700">
-                 Using <strong>{values.dealType === 'bogo' ? 'Buy 1 Get 1 Free' : 'Buy 2 Get 1 Free'}</strong> logic. 
-                 <br/>Calculation is based on Quantity: {values.quantity}.
+               <div className="mt-4 p-3 bg-blue-50 rounded-xl text-sm text-blue-700 flex items-center gap-2 border border-blue-100">
+                 <Tag className="w-4 h-4"/>
+                 <span>
+                   Applying <strong>{values.dealType === 'bogo' ? 'Buy 1 Get 1 Free' : 'Buy 2 Get 1 Free'}</strong> offer logic.
+                 </span>
                </div>
              )}
           </div>
