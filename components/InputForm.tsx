@@ -42,7 +42,33 @@ export const InputForm: React.FC<InputFormProps> = ({ values, onChange, mode, on
 
       <div className="p-6 space-y-6">
         
-        {/* Original Price Logic Explanation */}
+        {/* Mode Explanations */}
+        {mode === 'PRICE' && (
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
+             <Info className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+             <div className="text-sm text-blue-800">
+               <p className="font-semibold mb-1">How Price Discount Works?</p>
+               <p className="opacity-90">
+                 This tool calculates the <strong>Final Pay Price</strong> by subtracting the discount value from the original price.
+               </p>
+               <p className="mt-1 text-xs opacity-75 font-mono">Formula: Original Price - Discount = Final Price</p>
+             </div>
+          </div>
+        )}
+
+        {mode === 'DISCOUNT' && (
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
+             <Info className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+             <div className="text-sm text-blue-800">
+               <p className="font-semibold mb-1">How Discount Percentage Works?</p>
+               <p className="opacity-90">
+                 Find out the exact <strong>Discount %</strong> you received by comparing the Original Price and what you actually Paid.
+               </p>
+               <p className="mt-1 text-xs opacity-75 font-mono">Formula: ((Original - Final) / Original) × 100</p>
+             </div>
+          </div>
+        )}
+
         {mode === 'ORIGINAL' && (
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
              <Info className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />

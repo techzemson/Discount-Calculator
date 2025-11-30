@@ -2,10 +2,11 @@
 import React, { useState, useCallback } from 'react';
 import { InputForm } from './components/InputForm';
 import { ResultCard } from './components/ResultCard';
+import { DocumentationModal } from './components/DocumentationModal';
 import { DiscountInput, CalculatorMode, CalculationResult } from './types';
 import { calculateDiscount } from './services/calculatorService';
 import { analyzeDeal } from './services/aiService';
-import { Calculator, RefreshCw } from 'lucide-react';
+import { Calculator, RefreshCw, BookOpen } from 'lucide-react';
 
 // Default Initial State
 const defaultInput: DiscountInput = {
@@ -32,6 +33,9 @@ function App() {
   const [aiAdvice, setAiAdvice] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  // Modal State
+  const [isDocOpen, setIsDocOpen] = useState(false);
 
   // Handle Input Changes
   const handleInputChange = useCallback((key: keyof DiscountInput, value: string | number) => {
@@ -94,6 +98,9 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#f3f4f6] text-slate-900 pb-20 font-sans">
+      
+      <DocumentationModal isOpen={isDocOpen} onClose={() => setIsDocOpen(false)} />
+
       {/* Navbar */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -105,6 +112,14 @@ function App() {
               Discount Calculator
             </h1>
           </div>
+          
+          <button 
+            onClick={() => setIsDocOpen(true)}
+            className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 px-3 py-2 rounded-lg border border-slate-200 hover:border-blue-200"
+          >
+            <BookOpen className="w-4 h-4" />
+            <span className="hidden sm:inline">Documentation</span>
+          </button>
         </div>
       </header>
 
