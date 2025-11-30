@@ -10,7 +10,6 @@ export interface DiscountInput {
   shippingCost: number;
   additionalCoupon: number; // Percentage
   currency: string;
-  itemName: string;
   targetPrice?: number; // Used when calculating Discount Rate or Reverse
 }
 
@@ -22,12 +21,6 @@ export interface CalculationResult {
   effectiveDiscountRate: number;
   totalCost: number; // Including shipping and tax
   calculationMode: CalculatorMode;
-}
-
-export interface HistoryItem extends DiscountInput, CalculationResult {
-  id: string;
-  timestamp: number;
-  aiAdvice?: string;
 }
 
 export interface CurrencyOption {

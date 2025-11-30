@@ -1,11 +1,11 @@
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { InputForm } from './components/InputForm';
 import { ResultCard } from './components/ResultCard';
-import { DiscountInput, HistoryItem, CalculatorMode } from './types';
-import { calculateDiscount, formatCurrency } from './services/calculatorService';
+import { DiscountInput, CalculatorMode, CalculationResult } from './types';
+import { calculateDiscount } from './services/calculatorService';
 import { analyzeDeal } from './services/aiService';
-import { Calculator, History, Trash2, RefreshCw, BadgePercent } from 'lucide-react';
+import { Calculator, RefreshCw } from 'lucide-react';
 
 // Default Initial State
 const defaultInput: DiscountInput = {
@@ -17,58 +17,49 @@ const defaultInput: DiscountInput = {
   shippingCost: 0,
   additionalCoupon: 0,
   currency: 'USD',
-  itemName: '',
   targetPrice: 0
 };
 
 function App() {
   const [mode, setMode] = useState<CalculatorMode>('PRICE');
   const [inputs, setInputs] = useState<DiscountInput>(defaultInput);
-  const [history, setHistory] = useState<HistoryItem[]>(() => {
-    const saved = localStorage.getItem('discount_history');
-    return saved ? JSON.parse(saved) : [];
-  });
+  
+  // Results are now manual
+  const [result, setResult] = useState<CalculationResult | null>(null);
   
   // AI State
   const [aiAdvice, setAiAdvice] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  // Derived Results
-  const result = useMemo(() => calculateDiscount(inputs, mode), [inputs, mode]);
-
   // Handle Input Changes
   const handleInputChange = useCallback((key: keyof DiscountInput, value: string | number) => {
       setInputs(prev => ({ ...prev, [key]: value }));
-      // Reset AI advice when inputs change significantly
-      if (['originalPrice', 'discountValue', 'discountType', 'additionalCoupon', 'targetPrice'].includes(key)) {
-         setAiAdvice(null); 
-      }
+      // Clear result on specific changes if we want to force recalculation? 
+      // User requested manual Calculate button, so we keep result until button clicked or we can clear it.
+      // Let's keep the result to compare, but maybe clear AI advice.
+      setAiAdvice(null);
   }, []);
 
-  const addToHistory = (input: DiscountInput, resultCalc: any) => {
-    const newItem: HistoryItem = {
-      ...input,
-      ...resultCalc,
-      id: Date.now().toString(),
-      timestamp: Date.now(),
-      aiAdvice: aiAdvice || undefined
-    };
-    const newHistory = [newItem, ...history].slice(0, 50); // Keep last 50
-    setHistory(newHistory);
-    localStorage.setItem('discount_history', JSON.stringify(newHistory));
+  const handleCalculate = () => {
+    const calcResult = calculateDiscount(inputs, mode);
+    setResult(calcResult);
+    // Smooth scroll to result on mobile?
+    const resultElement = document.getElementById('result-section');
+    if (resultElement && window.innerWidth < 1024) {
+      resultElement.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
-  const clearHistory = () => {
-    setHistory([]);
-    localStorage.removeItem('discount_history');
+  const handleReset = () => {
+    setInputs({...defaultInput, currency: inputs.currency});
+    setResult(null);
+    setAiAdvice(null);
   };
 
   // AI Analysis Handler
   const handleAnalyze = async () => {
-    // Basic validation
-    if (mode === 'PRICE' && inputs.originalPrice <= 0) return;
-    if (mode === 'DISCOUNT' && (inputs.originalPrice <= 0 || (inputs.targetPrice || 0) <= 0)) return;
+    if (!result) return;
     
     setIsAnalyzing(true);
     setProgress(0);
@@ -91,7 +82,6 @@ function App() {
       setTimeout(() => {
         setAiAdvice(advice);
         setIsAnalyzing(false);
-        addToHistory(inputs, result); // Auto save analyzed deals
       }, 500); 
 
     } catch (e) {
@@ -102,106 +92,55 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 pb-20 font-sans">
+    <div className="min-h-screen bg-[#f3f4f6] text-slate-900 pb-20 font-sans">
       {/* Navbar */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between py-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-tr from-blue-600 to-indigo-600 p-2.5 rounded-xl shadow-lg shadow-blue-500/20">
-              <Calculator className="w-6 h-6 text-white" />
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-600 p-2 rounded-lg shadow-md">
+              <Calculator className="w-5 h-5 text-white" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-800 leading-tight">
-                Discount Calculator
-              </h1>
-              <p className="text-xs text-slate-500 font-medium">Smart Savings Tool</p>
-            </div>
+            <h1 className="text-xl font-bold text-slate-800 tracking-tight">
+              Discount Calculator
+            </h1>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* LEFT COLUMN: Inputs */}
           <div className="lg:col-span-7 space-y-6">
               
-              {/* Introduction Text (SEO friendly keywords visually) */}
-              <div className="flex flex-wrap gap-2 mb-2">
-                 {['Discount Price', 'Sale Calculator', 'Percentage Off', 'Rate Finder'].map(tag => (
-                   <span key={tag} className="px-2 py-1 bg-slate-100 text-slate-500 text-[10px] font-semibold uppercase tracking-wider rounded-md border border-slate-200">
-                     {tag}
-                   </span>
-                 ))}
-              </div>
-
               <InputForm 
                 values={inputs} 
                 onChange={handleInputChange} 
                 mode={mode}
-                onModeChange={setMode}
+                onModeChange={(m) => { setMode(m); setResult(null); }}
               />
               
-              <div className="flex gap-4">
-                 <button onClick={() => setInputs({...defaultInput, currency: inputs.currency})} className="flex-1 py-3 bg-white border border-slate-200 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors text-slate-600 font-medium shadow-sm">
-                   <RefreshCw className="w-4 h-4" /> Reset Form
+              {/* Primary Actions */}
+              <div className="flex flex-col gap-3">
+                 <button 
+                   onClick={handleCalculate}
+                   className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-lg shadow-lg shadow-blue-200 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+                 >
+                   Calculate Result
                  </button>
-              </div>
-
-              {/* History Section */}
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
-                   <h3 className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
-                     <History className="w-4 h-4 text-blue-500" /> Recent Calculations
-                   </h3>
-                   {history.length > 0 && (
-                     <button onClick={clearHistory} className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1 font-medium px-2 py-1 hover:bg-red-50 rounded transition-colors">
-                       <Trash2 className="w-3 h-3" /> Clear All
-                     </button>
-                   )}
-                </div>
-                <div className="max-h-64 overflow-y-auto custom-scrollbar">
-                  {history.length === 0 ? (
-                    <div className="p-10 text-center flex flex-col items-center gap-3">
-                      <div className="p-3 bg-slate-50 rounded-full">
-                        <BadgePercent className="w-6 h-6 text-slate-300" />
-                      </div>
-                      <p className="text-slate-400 text-sm">Your calculation history will appear here.</p>
-                    </div>
-                  ) : (
-                    <ul className="divide-y divide-slate-100">
-                      {history.map((item) => (
-                        <li key={item.id} className="p-4 hover:bg-slate-50 transition-colors flex justify-between items-center group cursor-default">
-                          <div className="flex items-start gap-3">
-                            <div className="mt-1 w-2 h-2 rounded-full bg-blue-500 shrink-0"></div>
-                            <div>
-                              <div className="font-medium text-slate-800 text-sm">{item.itemName || 'Untitled Item'}</div>
-                              <div className="text-xs text-slate-500 mt-0.5">
-                                {item.calculationMode === 'PRICE' ? (
-                                   <>Orig: {formatCurrency(item.originalPrice, item.currency)} → Final: {formatCurrency(item.totalCost, item.currency)}</>
-                                ) : (
-                                   <>Found: {item.effectiveDiscountRate.toFixed(1)}% Off</>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-green-600 font-bold text-sm">
-                               {item.calculationMode === 'DISCOUNT' ? item.effectiveDiscountRate.toFixed(1) + '%' : '-' + formatCurrency(item.totalSaving, item.currency)}
-                            </div>
-                            <div className="text-[10px] text-slate-400 mt-1">{new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                 
+                 <button 
+                   onClick={handleReset} 
+                   className="w-full py-3 bg-white border border-slate-200 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors text-slate-500 font-medium"
+                 >
+                   <RefreshCw className="w-4 h-4" /> Reset
+                 </button>
               </div>
           </div>
 
           {/* RIGHT COLUMN: Results */}
-          <div className="lg:col-span-5 relative">
-            <div className="sticky top-24 space-y-6">
+          <div className="lg:col-span-5" id="result-section">
+            <div className="sticky top-24">
               <ResultCard 
                   result={result} 
                   input={inputs} 
@@ -210,18 +149,6 @@ function App() {
                   isAnalyzing={isAnalyzing}
                   progress={progress}
               />
-              
-              {/* Feature Highlights / Trust signals */}
-              <div className="grid grid-cols-2 gap-3">
-                 <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm text-center">
-                    <div className="text-2xl mb-1">⚡</div>
-                    <div className="text-xs font-bold text-slate-700">Instant Result</div>
-                 </div>
-                 <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm text-center">
-                    <div className="text-2xl mb-1">📱</div>
-                    <div className="text-xs font-bold text-slate-700">Mobile Ready</div>
-                 </div>
-              </div>
             </div>
           </div>
 

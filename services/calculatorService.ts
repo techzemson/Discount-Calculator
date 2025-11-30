@@ -28,13 +28,13 @@ export const formatCurrency = (amount: number, currencyCode: string = 'USD'): st
 export const calculateDiscount = (input: DiscountInput, mode: CalculatorMode): CalculationResult => {
   const {
     originalPrice,
-    discountValue, // This might be calculated if mode is DISCOUNT
+    discountValue,
     discountType,
     quantity,
     taxRate,
     shippingCost,
     additionalCoupon,
-    targetPrice = 0 // Used as Final Price input in DISCOUNT/ORIGINAL modes
+    targetPrice = 0
   } = input;
 
   let calculatedFinalPriceUnit = 0;
@@ -75,10 +75,6 @@ export const calculateDiscount = (input: DiscountInput, mode: CalculatorMode): C
     calculatedOriginalPriceUnit = originalPrice;
     calculatedFinalPriceUnit = targetPrice;
     
-    // Assumes no extra coupon/tax logic for the *reverse* calc of rate to keep it simple,
-    // or we treat targetPrice as pre-tax pre-shipping for accuracy.
-    // Let's assume user enters the price they PAID vs price ON TAG.
-    
     calculatedSavings = Math.max(0, calculatedOriginalPriceUnit - calculatedFinalPriceUnit);
     effectiveRate = calculatedOriginalPriceUnit > 0 ? (calculatedSavings / calculatedOriginalPriceUnit) * 100 : 0;
     
@@ -87,14 +83,10 @@ export const calculateDiscount = (input: DiscountInput, mode: CalculatorMode): C
 
   } else if (mode === 'ORIGINAL') {
     // Reverse: Final + Discount -> Original
-    // Formula: Final = Original * (1 - rate)  => Original = Final / (1 - rate)
-    // Or: Final = Original - Fixed => Original = Final + Fixed
-    
     let derivedOriginal = 0;
     
     if (discountType === 'percent') {
         const rateDecimal = discountValue / 100;
-        // avoid divide by zero
         if (rateDecimal < 1) {
             derivedOriginal = targetPrice / (1 - rateDecimal);
         } else {
@@ -111,16 +103,9 @@ export const calculateDiscount = (input: DiscountInput, mode: CalculatorMode): C
   }
 
   // --- COMMON TOTALS CALCULATION ---
-  // Now we have Unit Final Price and Unit Original Price. 
-  // We apply Tax and Shipping to get the Grand Total (Cost to Pocket).
-  
   const subtotal = calculatedFinalPriceUnit * quantity;
   const taxAmount = subtotal * (taxRate / 100);
   const totalCost = subtotal + taxAmount + shippingCost;
-  
-  // Total Savings (Original * Qty - Final * Qty)
-  // We usually don't count tax savings in "You Save" on retail sites, but technically you do save the tax on the discounted amount.
-  // Let's stick to Price Savings.
   const totalSaving = (calculatedOriginalPriceUnit - calculatedFinalPriceUnit) * quantity;
 
   return {

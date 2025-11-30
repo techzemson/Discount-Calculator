@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { DiscountInput, CalculationResult } from "../types";
 
@@ -20,7 +21,6 @@ export const analyzeDeal = async (
   const prompt = `
     Analyze this shopping deal and provide a short, witty, and helpful verdict in 2-3 sentences.
     
-    Item: ${input.itemName || "Unknown Item"}
     Original Price: ${input.currency} ${input.originalPrice}
     Discount: ${input.discountType === 'percent' ? input.discountValue + '%' : input.discountValue + ' flat'} off
     Additional Coupon: ${input.additionalCoupon}%
