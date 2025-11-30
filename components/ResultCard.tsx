@@ -114,17 +114,17 @@ export const ResultCard: React.FC<ResultCardProps> = ({
            </div>
         </div>
 
-        {/* Chart - Simplified without centered text to avoid overlap */}
+        {/* Chart - Fixed Overlap by adding margin-top */}
         {hasData && result.calculationMode === 'PRICE' && (
-          <div className="h-48 w-full relative">
+          <div className="mt-6 h-56 w-full relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={chartData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={70}
+                  innerRadius={55}
+                  outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
                   startAngle={90}
@@ -138,10 +138,31 @@ export const ResultCard: React.FC<ResultCardProps> = ({
                    formatter={(value: number) => [formatCurrency(value, input.currency), 'Amount']}
                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
-                <Legend iconType="circle" verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}/>
+                <Legend iconType="circle" verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }}/>
               </PieChart>
             </ResponsiveContainer>
           </div>
+        )}
+
+        {/* New Feature: Quick Savings Look (Sensitivity) */}
+        {result.calculationMode === 'PRICE' && input.dealType === 'standard' && input.discountType === 'percent' && (
+           <div className="mt-4 bg-slate-50 rounded-xl p-4">
+             <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Savings at other rates</h4>
+             <div className="flex justify-between text-sm">
+                <div className="text-center">
+                  <div className="text-slate-400 text-xs mb-1">{input.discountValue - 5 > 0 ? input.discountValue - 5 : 0}%</div>
+                  <div className="font-medium text-slate-700">{formatCurrency(input.originalPrice * (1 - Math.max(0, input.discountValue - 5)/100), input.currency)}</div>
+                </div>
+                <div className="text-center border-l border-r border-slate-200 px-4">
+                  <div className="text-blue-500 font-bold text-xs mb-1">{input.discountValue}% (Current)</div>
+                  <div className="font-bold text-blue-600">{formatCurrency(result.finalPrice, input.currency)}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-green-500 text-xs mb-1">{input.discountValue + 5}%</div>
+                  <div className="font-medium text-slate-700">{formatCurrency(input.originalPrice * (1 - (input.discountValue + 5)/100), input.currency)}</div>
+                </div>
+             </div>
+           </div>
         )}
 
         {/* AI Analysis Section */}

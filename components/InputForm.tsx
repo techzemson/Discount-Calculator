@@ -2,7 +2,7 @@
 import React from 'react';
 import { DiscountInput, CalculatorMode } from '../types';
 import { currencies } from '../services/calculatorService';
-import { Percent, Tag, Truck, Calculator, ArrowRightLeft } from 'lucide-react';
+import { Percent, Tag, Truck, Calculator, ArrowRightLeft, ShoppingBag } from 'lucide-react';
 
 interface InputFormProps {
   values: DiscountInput;
@@ -24,13 +24,13 @@ export const InputForm: React.FC<InputFormProps> = ({ values, onChange, mode, on
           onClick={() => onModeChange('PRICE')}
           className={`flex-1 py-3 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${mode === 'PRICE' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
         >
-          <Calculator className="w-4 h-4" /> Calculate Price
+          <Calculator className="w-4 h-4" /> Price Discount
         </button>
         <button
           onClick={() => onModeChange('DISCOUNT')}
           className={`flex-1 py-3 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${mode === 'DISCOUNT' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
         >
-          <Percent className="w-4 h-4" /> Discount %
+          <Percent className="w-4 h-4" /> Discount Percentage
         </button>
         <button
           onClick={() => onModeChange('ORIGINAL')}
@@ -67,7 +67,7 @@ export const InputForm: React.FC<InputFormProps> = ({ values, onChange, mode, on
           {/* 1. Original Price Input (Required for PRICE and DISCOUNT modes) */}
           {(mode === 'PRICE' || mode === 'DISCOUNT') && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Original Price</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Original Price (Per Item)</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <span className="text-slate-400 font-bold text-lg">{currentCurrency.symbol}</span>
@@ -83,6 +83,33 @@ export const InputForm: React.FC<InputFormProps> = ({ values, onChange, mode, on
                   placeholder="0.00"
                 />
               </div>
+            </div>
+          )}
+
+          {/* DEAL TYPE SELECTOR (New Feature for PRICE mode) */}
+          {mode === 'PRICE' && (
+            <div>
+               <label className="block text-sm font-medium text-slate-700 mb-1">Deal Type</label>
+               <div className="grid grid-cols-3 gap-2">
+                 <button
+                    onClick={() => onChange('dealType', 'standard')}
+                    className={`px-2 py-2 text-xs sm:text-sm font-medium rounded-lg border transition-all ${values.dealType === 'standard' ? 'bg-blue-50 border-blue-200 text-blue-700 ring-1 ring-blue-200' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                 >
+                   Standard
+                 </button>
+                 <button
+                    onClick={() => onChange('dealType', 'bogo')}
+                    className={`px-2 py-2 text-xs sm:text-sm font-medium rounded-lg border transition-all ${values.dealType === 'bogo' ? 'bg-blue-50 border-blue-200 text-blue-700 ring-1 ring-blue-200' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                 >
+                   Buy 1 Get 1 Free
+                 </button>
+                 <button
+                    onClick={() => onChange('dealType', 'b2g1')}
+                    className={`px-2 py-2 text-xs sm:text-sm font-medium rounded-lg border transition-all ${values.dealType === 'b2g1' ? 'bg-blue-50 border-blue-200 text-blue-700 ring-1 ring-blue-200' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                 >
+                   Buy 2 Get 1 Free
+                 </button>
+               </div>
             </div>
           )}
 
@@ -110,8 +137,8 @@ export const InputForm: React.FC<InputFormProps> = ({ values, onChange, mode, on
             </div>
           )}
 
-          {/* 3. Discount Input (Required for PRICE and ORIGINAL modes) */}
-          {(mode === 'PRICE' || mode === 'ORIGINAL') && (
+          {/* 3. Discount Input (Required for PRICE [Standard only] and ORIGINAL modes) */}
+          {((mode === 'PRICE' && values.dealType === 'standard') || mode === 'ORIGINAL') && (
              <div className="grid grid-cols-2 gap-4">
                <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Discount Value</label>
@@ -158,6 +185,17 @@ export const InputForm: React.FC<InputFormProps> = ({ values, onChange, mode, on
              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Optional Details</p>
              <div className="grid grid-cols-2 gap-4">
                 <div>
+                   <label className="block text-xs text-slate-500 mb-1">Quantity</label>
+                    <input
+                        type="number"
+                        min="1"
+                        value={values.quantity}
+                        onChange={(e) => onChange('quantity', parseInt(e.target.value))}
+                        disabled={disabled}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                </div>
+                <div>
                     <label className="block text-xs text-slate-500 mb-1">Tax (%)</label>
                     <input
                         type="number"
@@ -181,31 +219,28 @@ export const InputForm: React.FC<InputFormProps> = ({ values, onChange, mode, on
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     />
                 </div>
-                <div>
-                   <label className="block text-xs text-slate-500 mb-1">Quantity</label>
-                    <input
-                        type="number"
-                        min="1"
-                        value={values.quantity}
-                        onChange={(e) => onChange('quantity', parseInt(e.target.value))}
-                        disabled={disabled}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                </div>
-                <div>
-                   <label className="block text-xs text-slate-500 mb-1">Extra Coupon (%)</label>
-                    <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={values.additionalCoupon || ''}
-                        onChange={(e) => onChange('additionalCoupon', parseFloat(e.target.value))}
-                        disabled={disabled}
-                        placeholder="0"
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                </div>
+                {values.dealType === 'standard' && (
+                  <div>
+                     <label className="block text-xs text-slate-500 mb-1">Extra Coupon (%)</label>
+                      <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={values.additionalCoupon || ''}
+                          onChange={(e) => onChange('additionalCoupon', parseFloat(e.target.value))}
+                          disabled={disabled}
+                          placeholder="0"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      />
+                  </div>
+                )}
              </div>
+             {values.dealType !== 'standard' && (
+               <div className="mt-2 p-2 bg-blue-50 rounded-lg text-xs text-blue-700">
+                 Using <strong>{values.dealType === 'bogo' ? 'Buy 1 Get 1 Free' : 'Buy 2 Get 1 Free'}</strong> logic. 
+                 <br/>Calculation is based on Quantity: {values.quantity}.
+               </div>
+             )}
           </div>
         )}
       </div>

@@ -1,6 +1,8 @@
 
 export type CalculatorMode = 'PRICE' | 'DISCOUNT' | 'ORIGINAL';
 
+export type DealType = 'standard' | 'bogo' | 'b2g1';
+
 export interface DiscountInput {
   originalPrice: number;
   discountValue: number;
@@ -11,6 +13,7 @@ export interface DiscountInput {
   additionalCoupon: number; // Percentage
   currency: string;
   targetPrice?: number; // Used when calculating Discount Rate or Reverse
+  dealType: DealType;
 }
 
 export interface CalculationResult {

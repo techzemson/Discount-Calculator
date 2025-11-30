@@ -17,7 +17,8 @@ const defaultInput: DiscountInput = {
   shippingCost: 0,
   additionalCoupon: 0,
   currency: 'USD',
-  targetPrice: 0
+  targetPrice: 0,
+  dealType: 'standard'
 };
 
 function App() {
